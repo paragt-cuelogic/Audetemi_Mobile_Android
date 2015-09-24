@@ -2,5 +2,11 @@
     <string name="app_name">audetemi_android</string>
 
     <string name="hello_world">Hello world!</string>
+    <string name="picture_saved">Picture Saved</string>
+    <string name="key">data</string>
+    <string name="picked_image">You haven\'t picked Image</string>
+    <string name="wrong">Something went wrong</string>
+    <string name="flash_not_supported">Flash not supported</string>
+
     <string name="action_settings">Settings</string>
 </resources>
