@@ -7,29 +7,27 @@ import android.content.res.Configuration;
 import android.database.Cursor;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
-import android.hardware.Camera.ShutterCallback;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import java.io.FileNotFoundException;
+import java.io.BufferedInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 public class MainActivity extends Activity implements View.OnClickListener, SurfaceHolder.Callback {
 
     private Button btn_gallery, btn_camera;
     private ToggleButton btn_flash;
+    private InputStream inputStream;
+    private BufferedInputStream buf;
     static android.hardware.Camera camera = null;
 
     private SurfaceView surfaceView;
@@ -38,6 +36,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
     private PictureCallback cameraCallback;
 
     private String imgDecodableString;
+    long currenttime;
     private String PATH ="/sdcard/%d.jpg";
 
 
@@ -66,21 +65,30 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
 
         cameraCallback = new PictureCallback() {
             public void onPictureTaken(byte[] data, android.hardware.Camera camera) {
-                FileOutputStream outStream = null;
+
+                currenttime=System.currentTimeMillis();
+                String filepath = null;
+
+                filepath ="/sdcard/"+currenttime+".jpg";
+
                 try {
-                    outStream = new FileOutputStream(String.format(PATH, System.currentTimeMillis()));
-                    outStream.write(data);
-                    outStream.close();
-                    Log.d("Log", "onPictureTaken - wrote bytes: " + data.length);
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
+                    FileOutputStream fileOutStream = new FileOutputStream(String.format(PATH, currenttime));
+                    fileOutStream.write(data);
+                    fileOutStream.close();
+                } catch (IOException ioe) {
+                    ioe.printStackTrace();
                 }
-                Toast.makeText(getApplicationContext(), R.string.picture_saved, Toast.LENGTH_SHORT).show();
-                refreshCamera();
-               // btn_camera.setClickable(true);
+
+
+
+                imgDecodableString = new String(data);
+
+                Intent intent =new Intent(MainActivity.this,ImageEditorActivity.class);
+                intent.putExtra(DATA_KEY, filepath);
+                startActivity(intent);
+
+                btn_camera.setClickable(true);
+
             }
         };
     }
@@ -89,12 +97,16 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
         //take the
         setFlashButtonState();
         camera.takePicture(null, null, cameraCallback);
-        //btn_camera.setClickable(false);
+        btn_camera.setClickable(false);
+
+
+
 
 
     }
 
     public void refreshCamera() {
+
         if (surfaceHolder.getSurface() == null) {
             // preview surface does not exist
             return;
@@ -107,11 +119,13 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
             // ignore: tried to stop a non-existent preview
         }
         // make any resize, rotate or reformatting changes here
+
         if (this.getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE) {
 
             camera.setDisplayOrientation(90);
 
-        } else {
+        }
+        else {
 
             camera.setDisplayOrientation(0);
 
@@ -152,10 +166,10 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
 
 
     private void launchGallery(String imgDecodableString) {
-        Intent intent =new Intent(this,GalleryDemoActivity.class);
+        Intent intent =new Intent(this,ImageEditorActivity.class);
         intent.putExtra(DATA_KEY, imgDecodableString);
+      //  intent.putExtra("photo", imgDecodableString.getBytes(Charset.forName("UTF-8")));
         startActivity(intent);
-
     }
 
     @Override
