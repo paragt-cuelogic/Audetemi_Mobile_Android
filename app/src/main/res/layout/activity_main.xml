@@ -7,22 +7,8 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context=".MainActivity"
+    tools:context=".MainActivity">
 
-    >
-    <!--<LinearLayout-->
-    <!--android:id="@+id/linearlayout"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="wrap_content"-->
-    <!--android:orientation="horizontal"-->
-    <!--android:layout_gravity="center_horizontal">-->
-
-
-    <!--</LinearLayout>-->
-    <!--<LinearLayout-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="wrap_content">-->
-    <!--android:layout_below="@+id/linearLayout"-->
     <SurfaceView
         android:id="@+id/surfaceView"
         android:layout_width="match_parent"
@@ -36,6 +22,7 @@
         android:clickable="true"
         android:gravity="center"
         android:orientation="horizontal">
+
         <Button
             android:id="@+id/gallery"
             android:layout_width="wrap_content"
@@ -56,41 +43,9 @@
 
 
         <ToggleButton
+            android:id="@+id/flash"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/flash" />
+            android:layout_height="wrap_content" />
 
-
-        <!--<Button-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:id="@+id/camera"-->
-        <!--android:text="Camera"-->
-        <!--android:gravity="bottom" android:layout_gravity="center_horizontal"-->
-        <!--android:layout_alignParentBottom="true"-->
-        <!--android:layout_centerHorizontal="true"-->
-        <!--android:layout_marginBottom="53dp" />-->
-
-        <!--<Button-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:id="@+id/gallery"-->
-        <!--android:text="Gallery"-->
-        <!--android:gravity="bottom"-->
-        <!--android:layout_alignTop="@+id/camera"-->
-        <!--android:layout_toLeftOf="@+id/camera"-->
-        <!--android:layout_toStartOf="@+id/camera" />-->
-
-        <!--<Button-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:id="@+id/flash"-->
-        <!--android:text="flash"-->
-        <!--android:gravity="bottom"-->
-        <!--android:layout_gravity="right"-->
-        <!--android:layout_alignTop="@+id/camera"-->
-        <!--android:layout_toRightOf="@+id/camera"-->
-        <!--android:layout_toEndOf="@+id/camera" />-->
-        <!--&lt;!&ndash;</LinearLayout>&ndash;&gt;-->
     </LinearLayout>
 </LinearLayout>

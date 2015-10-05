@@ -79,8 +79,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
                     ioe.printStackTrace();
                 }
 
-
-
                 imgDecodableString = new String(data);
 
                 Intent intent =new Intent(MainActivity.this,ImageEditorActivity.class);
@@ -98,11 +96,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
         setFlashButtonState();
         camera.takePicture(null, null, cameraCallback);
         btn_camera.setClickable(false);
-
-
-
-
-
     }
 
     public void refreshCamera() {
@@ -111,33 +104,14 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
             // preview surface does not exist
             return;
         }
-
         // stop preview before making changes
         try {
             camera.stopPreview();
-        } catch (Exception e) {
-            // ignore: tried to stop a non-existent preview
-        }
-        // make any resize, rotate or reformatting changes here
 
-        if (this.getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE) {
-
-            camera.setDisplayOrientation(90);
-
-        }
-        else {
-
-            camera.setDisplayOrientation(0);
-
-        }
-        // set preview size and make any resize, rotate or
-        // reformatting changes here
-        // start preview with new settings
-        try {
             camera.setPreviewDisplay(surfaceHolder);
             camera.startPreview();
         } catch (Exception e) {
-
+            // ignore: tried to stop a non-existent preview
         }
     }
 
@@ -168,7 +142,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
     private void launchGallery(String imgDecodableString) {
         Intent intent =new Intent(this,ImageEditorActivity.class);
         intent.putExtra(DATA_KEY, imgDecodableString);
-      //  intent.putExtra("photo", imgDecodableString.getBytes(Charset.forName("UTF-8")));
         startActivity(intent);
     }
 
@@ -177,12 +150,13 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
         try {
             // open the camera
             camera = android.hardware.Camera.open();
-            android.hardware.Camera.Parameters param = camera.getParameters();
-            camera.setParameters(param);
+//            android.hardware.Camera.Parameters param = camera.getParameters();
+//            camera.setParameters(param);
 
             try {
                 // The Surface has been created, now tell the camera where to draw
                 // the preview.
+                camera.setDisplayOrientation(90);
                 camera.setPreviewDisplay(surfaceHolder);
                 camera.startPreview();
             } catch (Exception e) {
@@ -200,10 +174,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
     }
 
     @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        refreshCamera();
-
-    }
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
