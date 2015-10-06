@@ -7,6 +7,10 @@
     <string name="picked_image">You haven\'t picked Image</string>
     <string name="wrong">Something went wrong</string>
     <string name="flash_not_supported">Flash not supported</string>
+    <string name="circle">Circle</string>
+    <string name="rectangle">Rectangle</string>
+    <string name="pointer">Pointer</string>
+    <string name="freehand">Free hand</string>
 
     <string name="action_settings">Settings</string>
 </resources>

@@ -4,14 +4,39 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
-    <TextView
-        android:id="@+id/text"
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/imageView"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true" />
+    <LinearLayout
+        android:layout_below="@+id/imageView"
+        android:layout_marginTop="40dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        >
+        <Button
+        android:id="@+id/circle"
+        android:text="@string/circle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
-    <View android:id="@+id/circle"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:background="@drawable/circle"/>
-
-
+        <Button
+            android:id="@+id/rectangle"
+            android:text="@string/rectangle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/poiter"
+            android:text="@string/pointer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/freehand"
+            android:text="@string/freehand"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
 </RelativeLayout>
