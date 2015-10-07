@@ -5,38 +5,68 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/imageView"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true" />
-    <LinearLayout
-        android:layout_below="@+id/imageView"
-        android:layout_marginTop="40dp"
+    <!--<ImageView-->
+        <!--android:id="@+id/imageView"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_centerHorizontal="true"-->
+        <!--android:layout_centerVertical="true" />-->
+
+    <android.opengl.GLSurfaceView
+        android:id="@+id/surfaceView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="horizontal"
-        >
-        <Button
-        android:id="@+id/circle"
-        android:text="@string/circle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-        <Button
-            android:id="@+id/rectangle"
-            android:text="@string/rectangle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-        <Button
-            android:id="@+id/poiter"
-            android:text="@string/pointer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-        <Button
-            android:id="@+id/freehand"
-            android:text="@string/freehand"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+        android:layout_above="@+id/linearlayout"
+        android:layout_centerHorizontal="true" />
+
+    <LinearLayout
+        android:id="@+id/linearlayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/circle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/circle" />
+
+
+            <Button
+                android:id="@+id/rectangle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/rectangle" />
+
+            <Button
+                android:id="@+id/poiter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/pointer" />
+
+            <Button
+                android:id="@+id/freehand"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/freehand" />
+        </LinearLayout>
+
+        <SeekBar
+            android:id="@+id/seekBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_below="@id/linearlayout"
+            android:max="10"
+            android:progress="5"
+            android:padding="10dp" />
     </LinearLayout>
+
+
 </RelativeLayout>

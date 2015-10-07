@@ -3,15 +3,24 @@ package com.example.parag.audetemi_android;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.view.Display;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
 
 import java.io.File;
+
+import jp.co.cyberagent.android.gpuimage.GPUImage;
+import jp.co.cyberagent.android.gpuimage.GPUImageBrightnessFilter;
+import jp.co.cyberagent.android.gpuimage.GPUImageContrastFilter;
+import jp.co.cyberagent.android.gpuimage.GPUImageSaturationFilter;
 
 /**
  * Created by Parag on 9/24/15.
@@ -19,7 +28,21 @@ import java.io.File;
 public class ImageEditorActivity extends Activity {
 
     private RelativeLayout relativeLayout;
-    private ImageView capturedImageView;
+    private RelativeLayout circleRelativeLayout, rectangleRelativeLayout;
+
+    private ScaleGestureDetector circleViewScaleGestureDetector;
+    private ScaleGestureDetector rectangleViewScaleGestureDetector;
+
+    private GLSurfaceView mGPUSurfaceview;
+    private GPUImage mGPUImage;
+    private GPUImageBrightnessFilter gpuImageBrightnessFilter;
+    private GPUImageContrastFilter gpuImageContrastFilter;
+    private GPUImageSaturationFilter gpuImageSaturationFilter;
+
+    private float scale = 1f;
+
+    private Bitmap rotatedBitmap;
+
     private Button btn_circle, btn_rectangle, btn_pointer, btn_freehand;
 
     @Override
@@ -33,6 +56,8 @@ public class ImageEditorActivity extends Activity {
 
         // Get the RelativeLayout from XML to add the shape elements dynamically.
         relativeLayout = (RelativeLayout) findViewById(R.id.relativelayout);
+
+        mGPUSurfaceview = (GLSurfaceView) findViewById(R.id.surfaceView);
         btn_circle = (Button) findViewById(R.id.circle);
         btn_rectangle = (Button) findViewById(R.id.rectangle);
         btn_pointer = (Button) findViewById(R.id.poiter);
@@ -61,9 +86,64 @@ public class ImageEditorActivity extends Activity {
         final Bitmap mutableBitmap = scaledBitmap.copy(Bitmap.Config.ARGB_8888, true);
 
         // To draw the pointer on the captured image.
-        capturedImageView = (ImageView) findViewById(R.id.imageView);
-        capturedImageView.setRotation(90);
-        capturedImageView.setImageBitmap(mutableBitmap);
+
+
+        mGPUImage = new GPUImage(this);
+        mGPUImage.setGLSurfaceView((GLSurfaceView) findViewById(R.id.surfaceView));
+
+        Matrix matrix = new Matrix();
+
+        matrix.postRotate(90);
+
+        rotatedBitmap = Bitmap.createBitmap(mutableBitmap , 0, 0, mutableBitmap .getWidth(), mutableBitmap .getHeight(), matrix, true);
+
+        mGPUImage.setImage(rotatedBitmap);
+
+        // TODO: Add options for Contrast & Brightness.
+//        gpuImageBrightnessFilter = new GPUImageBrightnessFilter(0.5f);
+//        mGPUImage.setFilter(gpuImageBrightnessFilter);
+
+//        gpuImageContrastFilter = new GPUImageContrastFilter(0.5f);
+//        mGPUImage.setFilter(gpuImageContrastFilter);
+
+        gpuImageSaturationFilter = new GPUImageSaturationFilter(0.5f);
+        mGPUImage.setFilter(gpuImageSaturationFilter);
+
+        circleViewScaleGestureDetector =
+                new ScaleGestureDetector(ImageEditorActivity.this,
+                        new CircleViewScaleGestureListener());
+
+        rectangleViewScaleGestureDetector =
+                new ScaleGestureDetector(ImageEditorActivity.this,
+                        new RectangleViewScaleGestureListener());
+
+        final SeekBar seekBar_contrast = (SeekBar) findViewById(R.id.seekBar);
+        seekBar_contrast.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                float brightnessValue = 0.1f * progress;
+                // TODO: Add options for Contrast & Brightness.
+//                gpuImageBrightnessFilter.setBrightness(brightnessValue);
+//                mGPUImage.setImage(mutableBitmap);
+
+//                gpuImageContrastFilter.setContrast(brightnessValue);
+//                mGPUImage.setImage(mutableBitmap);
+
+                gpuImageSaturationFilter.setSaturation(brightnessValue);
+                mGPUImage.setImage(rotatedBitmap);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
         btn_circle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -92,6 +172,64 @@ public class ImageEditorActivity extends Activity {
             }
         });
     }
+
+
+    public class CircleViewScaleGestureListener extends
+            ScaleGestureDetector.SimpleOnScaleGestureListener {
+
+        @Override
+        public boolean onScale(ScaleGestureDetector detector) {
+
+            scale *= detector.getScaleFactor();
+            scale = Math.max(0.1f, Math.min(scale, 5.0f));
+
+            if(circleRelativeLayout != null) {
+                circleRelativeLayout.setScaleX(scale);
+                circleRelativeLayout.setScaleY(scale);
+            }
+
+            return true;
+        }
+
+        @Override
+        public boolean onScaleBegin(ScaleGestureDetector detector) {
+            return true;
+        }
+
+        @Override
+        public void onScaleEnd(ScaleGestureDetector detector) {
+
+        }
+    }
+
+    public class RectangleViewScaleGestureListener extends
+            ScaleGestureDetector.SimpleOnScaleGestureListener {
+
+        @Override
+        public boolean onScale(ScaleGestureDetector detector) {
+
+            scale *= detector.getScaleFactor();
+            scale = Math.max(0.1f, Math.min(scale, 5.0f));
+
+            if(rectangleRelativeLayout != null) {
+                rectangleRelativeLayout.setScaleX(scale);
+                rectangleRelativeLayout.setScaleY(scale);
+            }
+
+            return true;
+        }
+
+        @Override
+        public boolean onScaleBegin(ScaleGestureDetector detector) {
+            return true;
+        }
+
+        @Override
+        public void onScaleEnd(ScaleGestureDetector detector) {
+
+        }
+    }
+
 
     private void displayPointerView() {
 
@@ -135,10 +273,13 @@ public class ImageEditorActivity extends Activity {
         View circleView = new View(this);
         circleView.setBackgroundResource(R.drawable.circle);
 
-        final RelativeLayout relative  = new RelativeLayout(ImageEditorActivity.this);
-        relative.setOnTouchListener(new View.OnTouchListener() {
+
+
+        circleRelativeLayout  = new RelativeLayout(ImageEditorActivity.this);
+        circleRelativeLayout.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+                circleViewScaleGestureDetector.onTouchEvent(event);
                 int X = (int) event.getRawX();
                 int Y = (int) event.getRawY();
 
@@ -150,8 +291,8 @@ public class ImageEditorActivity extends Activity {
                     case MotionEvent.ACTION_POINTER_DOWN:
                         break;
                     case MotionEvent.ACTION_MOVE:
-                        relative.setX(X);
-                        relative.setY(Y);
+                        circleRelativeLayout.setX(X);
+                        circleRelativeLayout.setY(Y);
                         break;
 
                 }
@@ -160,12 +301,12 @@ public class ImageEditorActivity extends Activity {
         });
 
         // TODO: Set this X and Y values dynamically.
-        relative.setX(200);
-        relative.setY(300);
+        circleRelativeLayout.setX(200);
+        circleRelativeLayout.setY(300);
 
         // TODO: Make this value dynamic based on the DPI values of the device.
-        relative.addView(circleView, 100, 100);
-        relativeLayout.addView(relative);
+        circleRelativeLayout.addView(circleView, 200, 200);
+        relativeLayout.addView(circleRelativeLayout);
     }
 
     private void drawRectangleView() {
@@ -173,10 +314,11 @@ public class ImageEditorActivity extends Activity {
         View rectangleView = new View(this);
         rectangleView.setBackgroundResource(R.drawable.rectangle);
 
-        final RelativeLayout relative  = new RelativeLayout(ImageEditorActivity.this);
-        relative.setOnTouchListener(new View.OnTouchListener() {
+        rectangleRelativeLayout  = new RelativeLayout(ImageEditorActivity.this);
+        rectangleRelativeLayout.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+                rectangleViewScaleGestureDetector.onTouchEvent(event);
                 int X = (int) event.getRawX();
                 int Y = (int) event.getRawY();
 
@@ -188,8 +330,8 @@ public class ImageEditorActivity extends Activity {
                     case MotionEvent.ACTION_POINTER_DOWN:
                         break;
                     case MotionEvent.ACTION_MOVE:
-                        relative.setX(X);
-                        relative.setY(Y);
+                        rectangleRelativeLayout.setX(X);
+                        rectangleRelativeLayout.setY(Y);
                         break;
                 }
                 return true;
@@ -197,16 +339,16 @@ public class ImageEditorActivity extends Activity {
         });
 
         // TODO: Set this X and Y values dynamically.
-        relative.setX(200);
-        relative.setY(300);
+        rectangleRelativeLayout.setX(200);
+        rectangleRelativeLayout.setY(300);
 
         // TODO: Make this value dynamic based on the DPI values of the device.
-        relative.addView(rectangleView, 100, 100);
-        relativeLayout.addView(relative);
+        rectangleRelativeLayout.addView(rectangleView, 200, 200);
+        relativeLayout.addView(rectangleRelativeLayout);
     }
 
     private void displayFreeHandView() {
         FreeHandView freeHandView = new FreeHandView(ImageEditorActivity.this);
-        relativeLayout.addView(freeHandView);
+        relativeLayout.addView(freeHandView, mGPUSurfaceview.getWidth(), mGPUSurfaceview.getHeight());
     }
 }

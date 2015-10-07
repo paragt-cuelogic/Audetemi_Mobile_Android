@@ -96,6 +96,6 @@ public class FreeHandView extends View {
         return true;
     }
 
-    // Circle, Rectangle, Pointer, Free Hand
+    
 }
 
