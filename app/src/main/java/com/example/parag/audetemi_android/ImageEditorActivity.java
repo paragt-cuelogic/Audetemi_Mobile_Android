@@ -1,9 +1,13 @@
 package com.example.parag.audetemi_android;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.graphics.PointF;
+import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.view.Display;
@@ -15,13 +19,17 @@ import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
+import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 
 import jp.co.cyberagent.android.gpuimage.GPUImage;
 import jp.co.cyberagent.android.gpuimage.GPUImageBrightnessFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImageContrastFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImageSaturationFilter;
+import jp.co.cyberagent.android.gpuimage.GPUImageVignetteFilter;
 
 /**
  * Created by Parag on 9/24/15.
@@ -39,15 +47,21 @@ public class ImageEditorActivity extends Activity {
     private GPUImageBrightnessFilter gpuImageBrightnessFilter;
     private GPUImageContrastFilter gpuImageContrastFilter;
     private GPUImageSaturationFilter gpuImageSaturationFilter;
+    private GPUImageVignetteFilter gpuImageVignettFilter;
 
     private float scale = 1f;
     private int oldX,oldY,originX,originY,diffX,diffY;
+    final int CROP_PIC = 2;
 
     private Bitmap rotatedBitmap;
     private Bitmap mutableBitmap;
 
-    private Button btn_circle, btn_rectangle, btn_pointer, btn_freehand;
+    private Button btn_circle, btn_rectangle, btn_pointer, btn_freehand, btn_crop;
     private CheckBox checkbox_brightness,checkbox_contrast,checkbox_saturation;
+
+    private File file;
+    private Uri uri;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,8 +81,9 @@ public class ImageEditorActivity extends Activity {
 
         // To reduce the bitmap size.
         BitmapFactory.Options options = new BitmapFactory.Options();
-        File file = new File(photoPath);
+        file = new File(photoPath);
         options.inJustDecodeBounds = true;
+        uri = Uri.fromFile(file);
         Bitmap bitmap =  BitmapFactory.decodeFile(file.getAbsolutePath(), options);
         int width = options.outWidth;
         if (width > displayWidth) {
@@ -92,26 +107,15 @@ public class ImageEditorActivity extends Activity {
 
         mGPUImage.setImage(rotatedBitmap);
 
-        gpuImageBrightnessFilter = new GPUImageBrightnessFilter();
-
-        gpuImageContrastFilter = new GPUImageContrastFilter();
-
-        gpuImageSaturationFilter = new GPUImageSaturationFilter();
-
-        circleViewScaleGestureDetector =
-                new ScaleGestureDetector(ImageEditorActivity.this,
-                        new CircleViewScaleGestureListener());
-
-        rectangleViewScaleGestureDetector =
-                new ScaleGestureDetector(ImageEditorActivity.this,
-                        new RectangleViewScaleGestureListener());
-
+        getUri();
+        initFilter();
+        initGesture();
         handleSeekbar();
-        
+
         btn_circle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(circleRelativeLayout == null){
+                if (circleRelativeLayout == null) {
                     drawCircleView();
                 }
             }
@@ -136,6 +140,14 @@ public class ImageEditorActivity extends Activity {
             @Override
             public void onClick(View v) {
                 displayFreeHandView();
+            }
+        });
+        btn_crop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(uri != null) {
+                    performCrop(uri);
+                }
             }
         });
     }
@@ -198,7 +210,25 @@ public class ImageEditorActivity extends Activity {
         }
     }
 
-    public void initView(){
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == CROP_PIC && data!=null) {
+            Bundle extras = data.getExtras();
+            if(extras != null) {
+                Bitmap thePic = extras.getParcelable("data");
+                if(thePic != null) {
+                    mGPUImage.deleteImage();
+                    mGPUImage.setImage(thePic);
+                    rotatedBitmap =thePic;
+                    getUri();
+                }
+            }
+
+        }
+    }
+
+    private void initView(){
 
         // Get the RelativeLayout from XML to add the shape elements dynamically.
         relativeLayout = (RelativeLayout) findViewById(R.id.relativelayout);
@@ -207,25 +237,86 @@ public class ImageEditorActivity extends Activity {
         btn_rectangle = (Button) findViewById(R.id.rectangle);
         btn_pointer = (Button) findViewById(R.id.poiter);
         btn_freehand = (Button) findViewById(R.id.freehand);
+        btn_crop = (Button) findViewById(R.id.crop);
         checkbox_brightness = (CheckBox) findViewById(R.id.brightness);
         checkbox_contrast = (CheckBox) findViewById(R.id.contrast);
         checkbox_saturation = (CheckBox) findViewById(R.id.saturation);
 
     }
 
-//    public void initFilter(){
-//
-//        mGPUImage = new GPUImage(this);
-//        mGPUImage.setGLSurfaceView(mGPUSurfaceview);
-//        mGPUImage.setImage(rotatedBitmap);
-//        gpuImageBrightnessFilter = new GPUImageBrightnessFilter();
-//        gpuImageContrastFilter = new GPUImageContrastFilter();
-//        gpuImageSaturationFilter = new GPUImageSaturationFilter();
-//
-//
-//    }
+    public void initFilter(){
 
-    public void handleSeekbar(){
+        gpuImageBrightnessFilter = new GPUImageBrightnessFilter();
+        gpuImageContrastFilter = new GPUImageContrastFilter();
+        gpuImageSaturationFilter = new GPUImageSaturationFilter();
+        gpuImageVignettFilter = new GPUImageVignetteFilter();
+
+    }
+    private void initGesture(){
+        circleViewScaleGestureDetector =
+                new ScaleGestureDetector(ImageEditorActivity.this,
+                        new CircleViewScaleGestureListener());
+
+        rectangleViewScaleGestureDetector =
+                new ScaleGestureDetector(ImageEditorActivity.this,
+                        new RectangleViewScaleGestureListener());
+    }
+
+    private void getUri(){
+        file = new File(this.getExternalCacheDir(), file.getName()+System.currentTimeMillis());
+        try {
+            file.createNewFile();
+            Bitmap actualBitmap = rotatedBitmap;
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            actualBitmap.compress(Bitmap.CompressFormat.PNG, 0 , bos);
+            byte[] bitmapdata = bos.toByteArray();
+
+            //write the bytes in file
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.write(bitmapdata);
+            fos.flush();
+            fos.close();
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+
+        uri = Uri.fromFile(file);
+
+    }
+
+
+    private void performCrop(Uri uri) {
+        try {
+            if(uri != null) {
+                Intent cropIntent = new Intent("com.android.camera.action.CROP");
+                // <span id="IL_AD5" class="IL_AD">indicate</span> image type and Uri
+                cropIntent.setDataAndType(uri, "image/*");
+                // set crop properties
+                cropIntent.putExtra("crop", "true");
+                // indicate aspect of desired crop
+                cropIntent.putExtra("aspectX", 1);
+                cropIntent.putExtra("aspectY", 1);
+                // indicate output X and Y
+                cropIntent.putExtra("outputX", 256);
+                cropIntent.putExtra("outputY", 256);
+                // retrieve data on return
+                cropIntent.putExtra("return-data", true);
+                // start <span id="IL_AD6" class="IL_AD">the activity</span> - we handle returning in onActivityResult
+                startActivityForResult(cropIntent, CROP_PIC);
+            }
+        }
+        catch (ActivityNotFoundException ae){
+            Toast toast = Toast
+                    .makeText(ImageEditorActivity.this, "This device doesn't support the crop action!", Toast.LENGTH_SHORT);
+            toast.show();
+        }
+    }
+
+
+
+
+
+    private void handleSeekbar(){
 
         final SeekBar seekBar_contrast = (SeekBar) findViewById(R.id.seekBar);
 
@@ -234,8 +325,14 @@ public class ImageEditorActivity extends Activity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 float value = 0.1f * progress;
                 if(checkbox_brightness.isChecked()) {
-                    mGPUImage.setFilter(gpuImageBrightnessFilter);
-                    gpuImageBrightnessFilter.setBrightness(value);
+//                    mGPUImage.setFilter(gpuImageBrightnessFilter);
+//                    gpuImageBrightnessFilter.setBrightness(value);
+//                    mGPUImage.setImage(mutableBitmap);
+
+                    mGPUImage.setFilter(gpuImageVignettFilter);
+                    gpuImageVignettFilter.setVignetteStart(value - 0.2f);
+                    gpuImageVignettFilter.setVignetteEnd(value);
+                    gpuImageVignettFilter.setVignetteCenter(new PointF(0.5f, 0.5f));
                     mGPUImage.setImage(mutableBitmap);
                 }
                 if(checkbox_saturation.isChecked()) {
@@ -351,7 +448,6 @@ public class ImageEditorActivity extends Activity {
 
         final View rectangleView = new View(this);
         rectangleView.setBackgroundResource(R.drawable.rectangle);
-
 
         rectangleRelativeLayout  = new RelativeLayout(ImageEditorActivity.this);
         rectangleRelativeLayout.setOnTouchListener(new View.OnTouchListener() {

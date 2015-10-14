@@ -17,6 +17,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
+        android:weightSum="5"
         android:orientation="vertical">
 
         <LinearLayout
@@ -28,25 +29,36 @@
                 android:id="@+id/circle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:text="@string/circle" />
 
             <Button
                 android:id="@+id/rectangle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:text="@string/rectangle" />
 
             <Button
                 android:id="@+id/poiter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:text="@string/pointer" />
 
             <Button
                 android:id="@+id/freehand"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:text="@string/freehand" />
+
+            <Button
+                android:id="@+id/crop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/crop" />
         </LinearLayout>
 
         <SeekBar
