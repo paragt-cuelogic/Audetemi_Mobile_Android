@@ -3,13 +3,17 @@ package com.example.parag.audetemi_android;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
 import android.database.Cursor;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
+import android.hardware.camera2.CameraDevice;
+import android.media.CamcorderProfile;
+import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -18,22 +22,33 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.concurrent.Semaphore;
 
 public class MainActivity extends Activity implements View.OnClickListener, SurfaceHolder.Callback {
 
-    private Button btn_gallery, btn_camera;
-    private ToggleButton btn_flash;
+    private Button btn_gallery,btn_camera;
+    private ToggleButton btn_flash,btn_video;
     private InputStream inputStream;
     private BufferedInputStream buf;
     static android.hardware.Camera camera = null;
+
+
 
     private SurfaceView surfaceView;
     private SurfaceHolder surfaceHolder;
 
     private PictureCallback cameraCallback;
+
+    private CameraDevice mCameraDevice;
+    private Semaphore mCameraOpenCloseLock = new Semaphore(1);
+
+    private MediaRecorder recorder;
 
     private String imgDecodableString;
     long currenttime;
@@ -41,6 +56,10 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
 
 
     private final String DATA_KEY = "data";
+    boolean recording = false;
+
+    public static final int MEDIA_TYPE_IMAGE = 1;
+    public static final int MEDIA_TYPE_VIDEO = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,20 +67,22 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
         setContentView(R.layout.activity_main);
 
         btn_gallery = (Button) findViewById(R.id.gallery);
+        btn_video = (ToggleButton) findViewById(R.id.video);
         btn_flash = (ToggleButton) findViewById(R.id.flash);
         btn_camera = (Button) findViewById(R.id.camera);
+        recorder = new MediaRecorder();
         btn_gallery.setOnClickListener(this);
+        btn_video.setOnClickListener(this);
         btn_flash.setOnClickListener(this);
         btn_camera.setOnClickListener(this);
 
         surfaceView = (SurfaceView) findViewById(R.id.surfaceView);
         surfaceHolder = surfaceView.getHolder();
+        surfaceHolder.addCallback(this);
+        surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 
         // Install a SurfaceHolder.Callback so we get notified when the
         // underlying surface is created and destroyed.
-        surfaceHolder.addCallback(this);
-        // deprecated setting, but required on Android versions prior to 3.0
-        surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 
         cameraCallback = new PictureCallback() {
             public void onPictureTaken(byte[] data, android.hardware.Camera camera) {
@@ -89,6 +110,13 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
 
             }
         };
+
+
+
+
+
+
+
     }
 
     public void captureImage() throws IOException {
@@ -121,6 +149,13 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
             case R.id.gallery:
                loadImagefromGallery();
                 break;
+            case R.id.video:
+                if (btn_video.isChecked()) {
+                    initMyRecorder();
+                } else {
+                    releaseMediaRecorder();
+                }
+                break;
             case R.id.flash:
                 setFlashButtonState();
                 break;
@@ -138,7 +173,42 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
 
     }
 
+    /**
+     * Initialize video recorder to record video
+     */
+    private void initMyRecorder() {
+        try {
 
+            camera.stopPreview();
+            camera.unlock();
+            recorder.setCamera(camera);
+
+            // Step 2: Set sources
+            recorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+            recorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+
+            // Step 3: Set a CamcorderProfile (requires API Level 8 or higher)
+            recorder.setProfile(CamcorderProfile
+                    .get(CamcorderProfile.QUALITY_HIGH));
+
+            // Step 4: Set output file
+            recorder.setOutputFile(String.valueOf(getOutputMediaFile(MEDIA_TYPE_VIDEO)));
+            // Step 5: Set the preview output
+            recorder.setPreviewDisplay(surfaceView.getHolder().getSurface());
+            // Step 6: Prepare configured MediaRecorder
+            recorder.prepare();
+            recorder.start();
+        } catch (Exception e) {
+            Log.e("Error Stating Camera", e.getMessage());
+        }
+    }
+    private void releaseMediaRecorder() {
+        if (recorder != null) {
+            recorder.reset(); // clear recorder configuration
+            recorder.release(); // release the recorder object
+            recorder = null;
+        }
+    }
     private void launchGallery(String imgDecodableString) {
         Intent intent =new Intent(this,ImageEditorActivity.class);
         intent.putExtra(DATA_KEY, imgDecodableString);
@@ -150,9 +220,9 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
         try {
             // open the camera
             camera = android.hardware.Camera.open();
+
 //            android.hardware.Camera.Parameters param = camera.getParameters();
 //            camera.setParameters(param);
-
             try {
                 // The Surface has been created, now tell the camera where to draw
                 // the preview.
@@ -183,6 +253,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
         camera.stopPreview();
         camera.release();
         camera = null;
+        finish();
 
     }
     public void loadImagefromGallery(){
@@ -248,4 +319,45 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
 
         }
     }
+
+
+
+
+    /** Create a File for saving an image or video */
+    private static File getOutputMediaFile(int type){
+        // To be safe, you should check that the SDCard is mounted
+        // using Environment.getExternalStorageState() before doing this.
+
+        File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_PICTURES), "MyCameraApp");
+        // This location works best if you want the created images to be shared
+        // between applications and persist after your app has been uninstalled.
+
+        // Create the storage directory if it does not exist
+        if (! mediaStorageDir.exists()){
+            if (! mediaStorageDir.mkdirs()){
+                Log.d("MyCameraApp", "failed to create directory");
+                return null;
+            }
+        }
+
+        // Create a media file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        File mediaFile;
+        if (type == MEDIA_TYPE_IMAGE){
+            mediaFile = new File(mediaStorageDir.getPath() + File.separator +
+                    "IMG_"+ timeStamp + ".jpg");
+        } else if(type == MEDIA_TYPE_VIDEO) {
+            mediaFile = new File(mediaStorageDir.getPath() + File.separator +
+                    "VID_"+ timeStamp + ".mp4");
+        } else {
+            return null;
+        }
+
+        return mediaFile;
+    }
+
+
+
+
 }

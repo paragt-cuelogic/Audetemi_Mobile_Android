@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
-import android.graphics.PointF;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
@@ -28,7 +27,9 @@ import java.io.FileOutputStream;
 import jp.co.cyberagent.android.gpuimage.GPUImage;
 import jp.co.cyberagent.android.gpuimage.GPUImageBrightnessFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImageContrastFilter;
+import jp.co.cyberagent.android.gpuimage.GPUImageGaussianBlurFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImageSaturationFilter;
+import jp.co.cyberagent.android.gpuimage.GPUImageSepiaFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImageVignetteFilter;
 
 /**
@@ -48,6 +49,8 @@ public class ImageEditorActivity extends Activity {
     private GPUImageContrastFilter gpuImageContrastFilter;
     private GPUImageSaturationFilter gpuImageSaturationFilter;
     private GPUImageVignetteFilter gpuImageVignettFilter;
+    private GPUImageSepiaFilter gpuImageSepiaFilter;
+    private GPUImageGaussianBlurFilter gpuImageGaussianBlurFilter;
 
     private float scale = 1f;
     private int oldX,oldY,originX,originY,diffX,diffY;
@@ -250,6 +253,8 @@ public class ImageEditorActivity extends Activity {
         gpuImageContrastFilter = new GPUImageContrastFilter();
         gpuImageSaturationFilter = new GPUImageSaturationFilter();
         gpuImageVignettFilter = new GPUImageVignetteFilter();
+        gpuImageSepiaFilter = new GPUImageSepiaFilter();
+        gpuImageGaussianBlurFilter = new GPUImageGaussianBlurFilter();
 
     }
     private void initGesture(){
@@ -329,11 +334,18 @@ public class ImageEditorActivity extends Activity {
 //                    gpuImageBrightnessFilter.setBrightness(value);
 //                    mGPUImage.setImage(mutableBitmap);
 
-                    mGPUImage.setFilter(gpuImageVignettFilter);
-                    gpuImageVignettFilter.setVignetteStart(value - 0.2f);
-                    gpuImageVignettFilter.setVignetteEnd(value);
-                    gpuImageVignettFilter.setVignetteCenter(new PointF(0.5f, 0.5f));
+//                    mGPUImage.setFilter(gpuImageVignettFilter);
+//                    gpuImageVignettFilter.setVignetteStart(value - 0.2f);
+//                    gpuImageVignettFilter.setVignetteEnd(value);
+//                    gpuImageVignettFilter.setVignetteCenter(new PointF(0.5f, 0.5f));
+//                    mGPUImage.setImage(mutableBitmap);
+
+                    mGPUImage.setFilter(gpuImageSepiaFilter);
+                    gpuImageSepiaFilter.setIntensity(value);
                     mGPUImage.setImage(mutableBitmap);
+//                    mGPUImage.setFilter(gpuImageGaussianBlurFilter);
+//                    gpuImageGaussianBlurFilter.setBlurSize(value);
+//                    mGPUImage.setImage(mutableBitmap);
                 }
                 if(checkbox_saturation.isChecked()) {
                     mGPUImage.setFilter(gpuImageSaturationFilter);

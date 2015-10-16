@@ -2,18 +2,11 @@
 <items version="2" >
 
     <item
-        jar="/Users/parag/AndroidStudioProjects/Audetemi_Mobile_Android/app/build/intermediates/exploded-aar/com.android.support/support-v4/23.0.0/jars/classes.jar"
+        jar="/Users/parag/.gradle/caches/modules-2/files-2.1/jp.co.cyberagent.android.gpuimage/gpuimage-library/1.3.0/e2e1ca1fbb73283fbc84a0d0b0e3e982d288c658/gpuimage-library-1.3.0.jar"
         jumboMode="false"
         revision="23.0.0"
-        sha1="8413c27b45b7fe61dca4a98159f65e2cee215f5a">
-        <dex dex="/Users/parag/AndroidStudioProjects/Audetemi_Mobile_Android/app/build/intermediates/pre-dexed/debug/classes-1d4096650754b361242510cc929bbc8a57a93ec1.jar" />
-    </item>
-    <item
-        jar="/Users/parag/AndroidStudioProjects/Audetemi_Mobile_Android/app/build/intermediates/exploded-aar/com.android.support/support-v4/23.0.0/jars/libs/internal_impl-23.0.0.jar"
-        jumboMode="false"
-        revision="23.0.0"
-        sha1="8bd336eeae661e8311330284897ee07f8ebaa297">
-        <dex dex="/Users/parag/AndroidStudioProjects/Audetemi_Mobile_Android/app/build/intermediates/pre-dexed/debug/internal_impl-23.0.0-94e64d732b1cea2f773bec700d30d352f5bb69a1.jar" />
+        sha1="e2e1ca1fbb73283fbc84a0d0b0e3e982d288c658">
+        <dex dex="/Users/parag/AndroidStudioProjects/Audetemi_Mobile_Android/app/build/intermediates/pre-dexed/debug/gpuimage-library-1.3.0-9bcf770aa8427cdee6c46876aeb2f81d4dff8603.jar" />
     </item>
     <item
         jar="/Users/parag/Library/Android/sdk/extras/android/m2repository/com/android/support/support-annotations/23.0.0/support-annotations-23.0.0.jar"
@@ -23,6 +16,13 @@
         <dex dex="/Users/parag/AndroidStudioProjects/Audetemi_Mobile_Android/app/build/intermediates/pre-dexed/debug/support-annotations-23.0.0-d8844ac8d04fb4f0824a025fc91f0c7ac8a78231.jar" />
     </item>
     <item
+        jar="/Users/parag/AndroidStudioProjects/Audetemi_Mobile_Android/app/build/intermediates/exploded-aar/com.android.support/support-v4/23.0.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.0"
+        sha1="8413c27b45b7fe61dca4a98159f65e2cee215f5a">
+        <dex dex="/Users/parag/AndroidStudioProjects/Audetemi_Mobile_Android/app/build/intermediates/pre-dexed/debug/classes-1d4096650754b361242510cc929bbc8a57a93ec1.jar" />
+    </item>
+    <item
         jar="/Users/parag/AndroidStudioProjects/Audetemi_Mobile_Android/app/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.0.0/jars/classes.jar"
         jumboMode="false"
         revision="23.0.0"
@@ -30,11 +30,11 @@
         <dex dex="/Users/parag/AndroidStudioProjects/Audetemi_Mobile_Android/app/build/intermediates/pre-dexed/debug/classes-2c97cae090f23cd063c8f290fc79e4e45ee6b4ef.jar" />
     </item>
     <item
-        jar="/Users/parag/.gradle/caches/modules-2/files-2.1/jp.co.cyberagent.android.gpuimage/gpuimage-library/1.3.0/e2e1ca1fbb73283fbc84a0d0b0e3e982d288c658/gpuimage-library-1.3.0.jar"
+        jar="/Users/parag/AndroidStudioProjects/Audetemi_Mobile_Android/app/build/intermediates/exploded-aar/com.android.support/support-v4/23.0.0/jars/libs/internal_impl-23.0.0.jar"
         jumboMode="false"
         revision="23.0.0"
-        sha1="e2e1ca1fbb73283fbc84a0d0b0e3e982d288c658">
-        <dex dex="/Users/parag/AndroidStudioProjects/Audetemi_Mobile_Android/app/build/intermediates/pre-dexed/debug/gpuimage-library-1.3.0-9bcf770aa8427cdee6c46876aeb2f81d4dff8603.jar" />
+        sha1="8bd336eeae661e8311330284897ee07f8ebaa297">
+        <dex dex="/Users/parag/AndroidStudioProjects/Audetemi_Mobile_Android/app/build/intermediates/pre-dexed/debug/internal_impl-23.0.0-94e64d732b1cea2f773bec700d30d352f5bb69a1.jar" />
     </item>
 
 </items>

@@ -32,6 +32,16 @@
             android:text="Gallery"
             android:textAppearance="?android:attr/textAppearanceLarge" />
 
+        <ToggleButton
+            android:id="@+id/video"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:padding="10dp"
+            android:textOn="Video"
+            android:textOff="Video"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
         <Button
             android:id="@+id/camera"
             android:layout_width="wrap_content"
@@ -45,7 +55,10 @@
         <ToggleButton
             android:id="@+id/flash"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:textOn="Flash"
+            android:textOff="Flash"
+          />
 
     </LinearLayout>
 </LinearLayout>
