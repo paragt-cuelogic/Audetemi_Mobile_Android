@@ -4,10 +4,12 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
-import android.hardware.camera2.CameraDevice;
 import android.media.CamcorderProfile;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
@@ -18,6 +20,9 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
+import android.widget.HorizontalScrollView;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
@@ -27,8 +32,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.concurrent.Semaphore;
 
 public class MainActivity extends Activity implements View.OnClickListener, SurfaceHolder.Callback {
 
@@ -37,26 +42,24 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
     private InputStream inputStream;
     private BufferedInputStream buf;
     static android.hardware.Camera camera = null;
+    private Bitmap bitmap;
 
-
-
+    private LinearLayout linearLayout;
     private SurfaceView surfaceView;
     private SurfaceHolder surfaceHolder;
-
+    private HorizontalScrollView horizontalScrollView;
     private PictureCallback cameraCallback;
-
-    private CameraDevice mCameraDevice;
-    private Semaphore mCameraOpenCloseLock = new Semaphore(1);
-
     private MediaRecorder recorder;
 
     private String imgDecodableString;
     long currenttime;
     private String PATH ="/sdcard/%d.jpg";
+    private String mediaFilePath;
 
+    private final String DATA_KEY_GALLERY = "data_gallery";
+    private final String DATA_KEY_CAPTURE = "data_capture";
+    ArrayList<Bitmap> frameList;
 
-    private final String DATA_KEY = "data";
-    boolean recording = false;
 
     public static final int MEDIA_TYPE_IMAGE = 1;
     public static final int MEDIA_TYPE_VIDEO = 2;
@@ -70,7 +73,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
         btn_video = (ToggleButton) findViewById(R.id.video);
         btn_flash = (ToggleButton) findViewById(R.id.flash);
         btn_camera = (Button) findViewById(R.id.camera);
-        recorder = new MediaRecorder();
+
         btn_gallery.setOnClickListener(this);
         btn_video.setOnClickListener(this);
         btn_flash.setOnClickListener(this);
@@ -80,6 +83,9 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
         surfaceHolder = surfaceView.getHolder();
         surfaceHolder.addCallback(this);
         surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        //imageView = (ImageView) findViewById(R.id.imagView);
+        horizontalScrollView = (HorizontalScrollView) findViewById(R.id.horizontalScrollview);
+        linearLayout = (LinearLayout) findViewById(R.id.linearlayout);
 
         // Install a SurfaceHolder.Callback so we get notified when the
         // underlying surface is created and destroyed.
@@ -103,20 +109,14 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
                 imgDecodableString = new String(data);
 
                 Intent intent =new Intent(MainActivity.this,ImageEditorActivity.class);
-                intent.putExtra(DATA_KEY, filepath);
+                intent.putExtra(DATA_KEY_CAPTURE, filepath);
+                intent.putExtra(DATA_KEY_GALLERY, "");
                 startActivity(intent);
 
                 btn_camera.setClickable(true);
 
             }
         };
-
-
-
-
-
-
-
     }
 
     public void captureImage() throws IOException {
@@ -147,13 +147,16 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.gallery:
-               loadImagefromGallery();
+                loadImagefromGallery();
                 break;
             case R.id.video:
                 if (btn_video.isChecked()) {
+                    Log.i("TAG", "isChecked");
                     initMyRecorder();
                 } else {
+                    Log.i("TAG", "isunChecked");
                     releaseMediaRecorder();
+                    convertToFrame();
                 }
                 break;
             case R.id.flash:
@@ -178,7 +181,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
      */
     private void initMyRecorder() {
         try {
-
+            recorder = new MediaRecorder();
             camera.stopPreview();
             camera.unlock();
             recorder.setCamera(camera);
@@ -202,16 +205,19 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
             Log.e("Error Stating Camera", e.getMessage());
         }
     }
+
     private void releaseMediaRecorder() {
         if (recorder != null) {
-            recorder.reset(); // clear recorder configuration
-            recorder.release(); // release the recorder object
+            recorder.reset();
+            recorder.release();
             recorder = null;
         }
     }
+
     private void launchGallery(String imgDecodableString) {
         Intent intent =new Intent(this,ImageEditorActivity.class);
-        intent.putExtra(DATA_KEY, imgDecodableString);
+        intent.putExtra(DATA_KEY_GALLERY, imgDecodableString);
+        intent.putExtra(DATA_KEY_CAPTURE, "");
         startActivity(intent);
     }
 
@@ -220,9 +226,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
         try {
             // open the camera
             camera = android.hardware.Camera.open();
-
-//            android.hardware.Camera.Parameters param = camera.getParameters();
-//            camera.setParameters(param);
             try {
                 // The Surface has been created, now tell the camera where to draw
                 // the preview.
@@ -250,49 +253,53 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
     public void surfaceDestroyed(SurfaceHolder holder) {
 
         // stop preview and release camera
-        camera.stopPreview();
-        camera.release();
-        camera = null;
-        finish();
-
+        if(camera !=null) {
+            camera.stopPreview();
+            camera.release();
+            camera = null;
+        }
     }
-    public void loadImagefromGallery(){
-        Intent galleryIntent = new Intent(Intent.ACTION_PICK,
-                                          android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        startActivityForResult(galleryIntent, 1);
+    public void loadImagefromGallery() {
+        Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        startActivityForResult(galleryIntent,1);
     }
 
-        @Override
-        protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-            try {
-                super.onActivityResult(requestCode, resultCode, data);
-                if (requestCode == 1 && resultCode == RESULT_OK && null != data) {
-                    // Get the Image from data
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Log.i("onActivityResult", "In try");
+        try {
+            Log.i("onActivityResult", "In try");
+            Toast.makeText(this, "In try",
+                    Toast.LENGTH_LONG).show();
+            super.onActivityResult(requestCode, resultCode, data);
+            if (requestCode == 1 && resultCode == RESULT_OK && null != data) {
+                // Get the Image from data
+                Log.i("onActivityResult","In if loop");
+                Uri selectedImage = data.getData();
+                String[] filePathColumn = {MediaStore.Images.Media.DATA};
 
-                    Uri selectedImage = data.getData();
-                    String[] filePathColumn = {MediaStore.Images.Media.DATA};
+                // Get the cursor
+                Cursor cursor = getContentResolver().query(selectedImage,
+                        filePathColumn, null, null, null);
+                // Move to first row
+                cursor.moveToFirst();
 
-                    // Get the cursor
-                    Cursor cursor = getContentResolver().query(selectedImage,
-                            filePathColumn, null, null, null);
-                    // Move to first row
-                    cursor.moveToFirst();
-
-                    int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-                    imgDecodableString = cursor.getString(columnIndex);
-                    cursor.close();
-                    launchGallery(imgDecodableString);
-
-                }
-                else {
-                    Toast.makeText(this, R.string.picked_image,
-                            Toast.LENGTH_LONG).show();
-                }
-            } catch (Exception e) {
-                Toast.makeText(this, R.string.wrong, Toast.LENGTH_LONG)
-                        .show();
+                int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+                imgDecodableString = cursor.getString(columnIndex);
+                cursor.close();
+                launchGallery(imgDecodableString);
             }
+            else {
+                Toast.makeText(this, "Image not picked",
+                        Toast.LENGTH_LONG).show();
+                Log.i("else onActivityResult", "" + "");
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Wrong", Toast.LENGTH_LONG)
+                    .show();
 
+        }
     }
 
     private void setFlashButtonState() {
@@ -324,7 +331,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
 
 
     /** Create a File for saving an image or video */
-    private static File getOutputMediaFile(int type){
+    private  File getOutputMediaFile(int type){
         // To be safe, you should check that the SDCard is mounted
         // using Environment.getExternalStorageState() before doing this.
 
@@ -350,6 +357,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
         } else if(type == MEDIA_TYPE_VIDEO) {
             mediaFile = new File(mediaStorageDir.getPath() + File.separator +
                     "VID_"+ timeStamp + ".mp4");
+
+            mediaFilePath = mediaFile.getPath();
         } else {
             return null;
         }
@@ -357,7 +366,39 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
         return mediaFile;
     }
 
+    private void convertToFrame() {
+        MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+        mediaMetadataRetriever.setDataSource(mediaFilePath);
 
+        int duration = Integer.parseInt(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION))/1000;
+        Log.i("Duration","duration "+duration);
 
+        frameList = new ArrayList<Bitmap>();
+        frameList.clear();
 
+        if(linearLayout != null) {
+            linearLayout.removeAllViews();
+        }
+
+        for (int i = 0; i < duration; i++) {
+//            Bitmap bArray = mediaMetadataRetriever.getFrameAtTime(1000000 * i, MediaMetadataRetriever.OPTION_CLOSEST);
+            Matrix matrix = new Matrix();
+
+            matrix.postRotate(90);
+            Bitmap bitmap = mediaMetadataRetriever.getFrameAtTime(i * 1000000);
+            Bitmap rotatedBitmap = Bitmap.createBitmap(bitmap , 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+            frameList.add(rotatedBitmap);
+        }
+
+        for (int j = 0; j < frameList.size(); j++) {
+            ImageView imageView = new ImageView(this);
+            LinearLayout.LayoutParams vp = new LinearLayout.LayoutParams(200, 200);
+            imageView.setLayoutParams(vp);
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setMaxHeight(150);
+            imageView.setMaxWidth(150);
+            imageView.setImageBitmap(frameList.get(j));
+            linearLayout.addView(imageView);
+        }
+    }
 }

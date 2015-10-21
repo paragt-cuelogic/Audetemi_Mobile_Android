@@ -20,6 +20,8 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
+import com.soundcloud.android.crop.Crop;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -59,11 +61,14 @@ public class ImageEditorActivity extends Activity {
     private Bitmap rotatedBitmap;
     private Bitmap mutableBitmap;
 
+
     private Button btn_circle, btn_rectangle, btn_pointer, btn_freehand, btn_crop;
     private CheckBox checkbox_brightness,checkbox_contrast,checkbox_saturation;
 
     private File file;
     private Uri uri;
+    private String photoPath;
+    private Matrix matrix = new Matrix();
 
 
     @Override
@@ -73,9 +78,16 @@ public class ImageEditorActivity extends Activity {
 
         // Get the data from bundle object.
         Bundle extras = getIntent().getExtras();
-        String photoPath = extras.getString("data");
+
+        if(extras.getString("data_capture").equals("")) {
+            // Gallery
+            photoPath = extras.getString("data_gallery");
+        } else {
+            // Camera
+            photoPath = extras.getString("data_capture");
+        }
+
         initView();
-        //initFilter();
 
         // Get Display height and width.
         Display display = getWindowManager().getDefaultDisplay();
@@ -104,7 +116,10 @@ public class ImageEditorActivity extends Activity {
 
         Matrix matrix = new Matrix();
 
-        matrix.postRotate(90);
+        if(extras.getString("data_gallery").equals("")) {
+            // Gallery
+            matrix.postRotate(90);
+        }
 
         rotatedBitmap = Bitmap.createBitmap(mutableBitmap , 0, 0, mutableBitmap.getWidth(), mutableBitmap.getHeight(), matrix, true);
 
@@ -149,7 +164,8 @@ public class ImageEditorActivity extends Activity {
             @Override
             public void onClick(View v) {
                 if(uri != null) {
-                    performCrop(uri);
+                    //performCrop(uri);
+                    beginCrop(uri);
                 }
             }
         });
@@ -167,6 +183,7 @@ public class ImageEditorActivity extends Activity {
             scale = Math.max(0.1f, Math.min(scale, 5.0f));
 
             if(circleRelativeLayout != null) {
+                matrix.setScale(scale, scale);
                 circleRelativeLayout.setScaleX(scale);
                 circleRelativeLayout.setScaleY(scale);
             }
@@ -216,18 +233,36 @@ public class ImageEditorActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == CROP_PIC && data!=null) {
-            Bundle extras = data.getExtras();
-            if(extras != null) {
-                Bitmap thePic = extras.getParcelable("data");
-                if(thePic != null) {
-                    mGPUImage.deleteImage();
-                    mGPUImage.setImage(thePic);
-                    rotatedBitmap =thePic;
-                    getUri();
-                }
-            }
-
+//        if (requestCode == CROP_PIC && data!=null) {
+//            Bundle extras = data.getExtras();
+//            if(extras != null) {
+//                Bitmap thePic = extras.getParcelable("data");
+//                if(thePic != null) {
+//                    mGPUImage.deleteImage();
+//                    mGPUImage.setImage(thePic);
+//                    rotatedBitmap =thePic;
+//                    getUri();
+//                }
+//            }
+//
+//        }
+        if (requestCode == Crop.REQUEST_PICK && resultCode == RESULT_OK) {
+            beginCrop(data.getData());
+        } else if (requestCode == Crop.REQUEST_CROP) {
+            handleCrop(resultCode, data);
+//            Bundle extras = data.getExtras();
+//            if(extras != null) {
+//                Bitmap thePic = extras.getParcelable("data");
+//                Log.i("thePic"," "+thePic);
+//                if(thePic != null) {
+//                    mGPUImage.deleteImage();
+//                    mGPUImage.setImage(thePic);
+//                    rotatedBitmap =thePic;
+//                    getUri();
+//                    Log.i("ifthePic", " " + thePic);
+//                }
+//
+//            }
         }
     }
 
@@ -308,6 +343,7 @@ public class ImageEditorActivity extends Activity {
                 cropIntent.putExtra("return-data", true);
                 // start <span id="IL_AD6" class="IL_AD">the activity</span> - we handle returning in onActivityResult
                 startActivityForResult(cropIntent, CROP_PIC);
+
             }
         }
         catch (ActivityNotFoundException ae){
@@ -317,9 +353,25 @@ public class ImageEditorActivity extends Activity {
         }
     }
 
+    private void beginCrop(Uri source) {
+        Uri destination = Uri.fromFile(new File(getCacheDir(), "cropped"));
+        Crop.of(source, destination).asSquare().start(this);
+    }
 
+    private void handleCrop(int resultCode, Intent result) {
+        if (resultCode == RESULT_OK) {
+            mGPUImage.setImage(Crop.getOutput(result));
+            getUri();
+//            if(result!= null){
+//                startActivityForResult(result,Crop.REQUEST_CROP);
+//            }
+            ;
+           // resultView.setImageURI(Crop.getOutput(result));
 
-
+        } else if (resultCode == Crop.RESULT_ERROR) {
+            Toast.makeText(this, Crop.getError(result).getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
 
     private void handleSeekbar(){
 
@@ -330,9 +382,9 @@ public class ImageEditorActivity extends Activity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 float value = 0.1f * progress;
                 if(checkbox_brightness.isChecked()) {
-//                    mGPUImage.setFilter(gpuImageBrightnessFilter);
-//                    gpuImageBrightnessFilter.setBrightness(value);
-//                    mGPUImage.setImage(mutableBitmap);
+                    mGPUImage.setFilter(gpuImageBrightnessFilter);
+                    gpuImageBrightnessFilter.setBrightness(value);
+                    mGPUImage.setImage(mutableBitmap);
 
 //                    mGPUImage.setFilter(gpuImageVignettFilter);
 //                    gpuImageVignettFilter.setVignetteStart(value - 0.2f);
@@ -340,9 +392,9 @@ public class ImageEditorActivity extends Activity {
 //                    gpuImageVignettFilter.setVignetteCenter(new PointF(0.5f, 0.5f));
 //                    mGPUImage.setImage(mutableBitmap);
 
-                    mGPUImage.setFilter(gpuImageSepiaFilter);
-                    gpuImageSepiaFilter.setIntensity(value);
-                    mGPUImage.setImage(mutableBitmap);
+//                    mGPUImage.setFilter(gpuImageSepiaFilter);
+//                    gpuImageSepiaFilter.setIntensity(value);
+//                    mGPUImage.setImage(mutableBitmap);
 //                    mGPUImage.setFilter(gpuImageGaussianBlurFilter);
 //                    gpuImageGaussianBlurFilter.setBlurSize(value);
 //                    mGPUImage.setImage(mutableBitmap);
@@ -410,9 +462,6 @@ public class ImageEditorActivity extends Activity {
         relativeLayout.addView(relative);
     }
 
-
-
-
     private void drawCircleView() {
 
         View circleView = new View(this);
@@ -427,8 +476,8 @@ public class ImageEditorActivity extends Activity {
                     case MotionEvent.ACTION_DOWN:
                             oldX = (int) event.getRawX();
                             oldY = (int) event.getRawY();
-                            diffX = (int) rectangleRelativeLayout.getX() - oldX;
-                            diffY = (int)rectangleRelativeLayout.getY() - oldY;
+                            diffX = (int) circleRelativeLayout.getX() - oldX;
+                            diffY = (int) circleRelativeLayout.getY() - oldY;
                         break;
                     case MotionEvent.ACTION_POINTER_UP:
                         break;
@@ -471,7 +520,7 @@ public class ImageEditorActivity extends Activity {
                             oldX = (int) event.getRawX();
                             oldY = (int) event.getRawY();
                             diffX = (int) rectangleRelativeLayout.getX() - oldX;
-                            diffY = (int)rectangleRelativeLayout.getY() - oldY;
+                            diffY = (int) rectangleRelativeLayout.getY() - oldY;
                         break;
                     case MotionEvent.ACTION_POINTER_UP:
                         break;
